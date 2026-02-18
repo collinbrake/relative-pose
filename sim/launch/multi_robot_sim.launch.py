@@ -5,8 +5,9 @@ import re
 import tempfile
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, ExecuteProcess, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler
 from launch.conditions import IfCondition
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -89,75 +90,73 @@ def generate_launch_description():
             '-x', '0.0',
             '-y', '0.0',
             '-z', '0.1',
-            '-Y', '0.0'
+            '-Y', '0.0',
+            '-timeout', '120'
+        ],
+        output='screen'
+    )
+
+    # Spawn Follower Robot after leader spawn exits
+    spawn_follower = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        namespace='follower',
+        arguments=[
+            '-entity', 'follower',
+            '-file', follower_sdf,
+            '-robot_namespace', 'follower',
+            '-x', '-5.0',
+            '-y', '0.0',
+            '-z', '0.1',
+            '-Y', '0.0',
+            '-timeout', '120'
         ],
         output='screen'
     )
     
-    # Spawn Follower Robot (delayed to avoid overwhelming Gazebo)
-    spawn_follower = TimerAction(
-        period=5.0,
-        actions=[
-            Node(
-                package='gazebo_ros',
-                executable='spawn_entity.py',
-                namespace='follower',
-                arguments=[
-                    '-entity', 'follower',
-                    '-file', follower_sdf,
-                    '-robot_namespace', 'follower',
-                    '-x', '-5.0',
-                    '-y', '0.0',
-                    '-z', '0.1',
-                    '-Y', '0.0'
-                ],
-                output='screen'
-            )
-        ]
+    # Leader Controller
+    leader_controller = Node(
+        package='relative_pose_sim',
+        executable='leader_controller.py',
+        namespace='leader',
+        name='leader_controller',
+        parameters=[{'use_sim_time': use_sim_time}],
+        output='screen',
+        condition=IfCondition(enable_controllers)
     )
     
-    # Leader Controller (delayed start)
-    leader_controller = TimerAction(
-        period=8.0,
-        actions=[
-            Node(
-                package='relative_pose_sim',
-                executable='leader_controller.py',
-                namespace='leader',
-                name='leader_controller',
-                parameters=[{'use_sim_time': use_sim_time}],
-                output='screen'
-            )
-        ]
+    # Follower Controller
+    follower_controller = Node(
+        package='relative_pose_sim',
+        executable='follower_controller.py',
+        namespace='follower',
+        name='follower_controller',
+        parameters=[{'use_sim_time': use_sim_time}],
+        output='screen',
+        condition=IfCondition(enable_controllers)
     )
     
-    # Follower Controller (delayed start)
-    follower_controller = TimerAction(
-        period=8.0,
-        actions=[
-            Node(
-                package='relative_pose_sim',
-                executable='follower_controller.py',
-                namespace='follower',
-                name='follower_controller',
-                parameters=[{'use_sim_time': use_sim_time}],
-                output='screen'
-            )
-        ]
+    # Data Recorder
+    data_recorder = Node(
+        package='relative_pose_sim',
+        executable='data_recorder.py',
+        name='data_recorder',
+        parameters=[{'use_sim_time': use_sim_time}],
+        output='screen'
     )
-    
-    # Data Recorder (delayed start)
-    data_recorder = TimerAction(
-        period=10.0,
-        actions=[
-            Node(
-                package='relative_pose_sim',
-                executable='data_recorder.py',
-                name='data_recorder',
-                parameters=[{'use_sim_time': use_sim_time}],
-                output='screen'
-            )
-        ]
+
+    spawn_follower_after_leader = RegisterEventHandler(
+        OnProcessExit(
+            target_action=spawn_leader,
+            on_exit=[spawn_follower]
+        )
+    )
+
+    start_nodes_after_follower = RegisterEventHandler(
+        OnProcessExit(
+            target_action=spawn_follower,
+            on_exit=[leader_controller, follower_controller, data_recorder]
+        )
     )
     
     return LaunchDescription([
@@ -166,8 +165,6 @@ def generate_launch_description():
         gzserver,
         gzclient,
         spawn_leader,
-        spawn_follower,
-        leader_controller,
-        follower_controller,
-        data_recorder
+        spawn_follower_after_leader,
+        start_nodes_after_follower
     ])
