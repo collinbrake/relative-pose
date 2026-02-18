@@ -205,3 +205,19 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# ROS2 / colcon generated artifacts
+/build/
+/install/
+/log/
+.colcon/
+
+# ROS and simulator runtime outputs
+*.db3
+*.bag
+*.bag.active
+*.bag.orig.active
+*.bag_0.db3
+
+# Local simulation/data outputs
+relative_pose_data_*/
