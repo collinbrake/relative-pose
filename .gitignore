@@ -210,6 +210,7 @@ __marimo__/
 /build/
 /install/
 /log/
+/bags/
 .colcon/
 
 # ROS and simulator runtime outputs

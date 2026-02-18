@@ -12,6 +12,7 @@
   - leader pose
   - follower pose
   - lidar pointcloud
+  - ROS bag format
 - Control:
   - leader robot should follow a scripted path with randomized (but continuous) poses, speeds, and orientations
   - follower robot follows another scripted path that keeps it within lidar range of the leader
