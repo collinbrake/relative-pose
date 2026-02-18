@@ -135,6 +135,17 @@ def generate_launch_description():
         output='screen',
         condition=IfCondition(enable_controllers)
     )
+
+    # Static TF for follower lidar frame (required for PointCloud2 visualization)
+    follower_lidar_static_tf = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        namespace='follower',
+        name='follower_lidar_static_tf',
+        remappings=[('/tf', 'tf'), ('/tf_static', 'tf_static')],
+        arguments=['0.55', '0.0', '1.1', '0', '0', '0', 'base_footprint', 'lidar_link'],
+        output='screen'
+    )
     
     # Data Recorder
     data_recorder = Node(
@@ -155,7 +166,7 @@ def generate_launch_description():
     start_nodes_after_follower = RegisterEventHandler(
         OnProcessExit(
             target_action=spawn_follower,
-            on_exit=[leader_controller, follower_controller, data_recorder]
+            on_exit=[follower_lidar_static_tf, leader_controller, follower_controller, data_recorder]
         )
     )
     

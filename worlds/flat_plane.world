@@ -1,8 +1,6 @@
 <?xml version="1.0" ?>
 <sdf version="1.6">
   <world name="default">
-    <plugin name="gazebo_ros_init" filename="libgazebo_ros_init.so"/>
-    <plugin name="gazebo_ros_factory" filename="libgazebo_ros_factory.so"/>
     
     <!-- Physics settings optimized for multi-robot simulation -->
     <physics type="ode">
