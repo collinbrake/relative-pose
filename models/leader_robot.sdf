@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="leader_robot">
+    <static>false</static>
+
+    <include filename="base_box_wheels.sdf"/>
+
+  </model>
+</sdf>
