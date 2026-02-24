@@ -1,6 +1,11 @@
 # relative-pose
 
-Spec: `sim/sim.md`
+Learn more about ROS2 and perception.
+- Generate lidar and ground truth pose data via simulation
+- Train/validate a CNN with generated data
+- Ultimately integrate this toy application with embedded hardware using Yocto and `meta-ros`
+
+Simulation specification: `sim/sim.md`
 
 ## Build (optional)
 
